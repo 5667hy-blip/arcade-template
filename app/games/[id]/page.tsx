@@ -28,7 +28,7 @@ export default async function GamePage({ params }: { params: { id: string } }) {
 
   const gameWithProfile = {
     ...game,
-    profiles: profile ?? null,
+    profiles: profile ?? undefined,
   }
 
   // プレイ数インクリメント（失敗しても続行）
