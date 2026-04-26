@@ -39,7 +39,7 @@ export default function GamePlayer({ game }: { game: Game }) {
         `}
       >
         <iframe
-          src={game.game_url}
+          src={`/api/play/${game.id}`}
           className="absolute inset-0 w-full h-full"
           allow="fullscreen; autoplay; gamepad"
           sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups"
