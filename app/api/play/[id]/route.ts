@@ -19,18 +19,18 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     return NextResponse.redirect(game.game_url)
   }
 
-  // Supabase StorageのHTMLをフェッチして正しいContent-Typeで返す
+  // Supabase StorageのHTMLをバイト列で取得し、UTF-8として強制デコード
   const res = await fetch(game.game_url)
   if (!res.ok) {
     return new NextResponse('Failed to fetch game', { status: 502 })
   }
 
-  const html = await res.text()
+  const buffer = await res.arrayBuffer()
+  const html = new TextDecoder('utf-8').decode(buffer)
 
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'X-Frame-Options': 'SAMEORIGIN',
     },
   })
 }
