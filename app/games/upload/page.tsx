@@ -54,7 +54,7 @@ export default function UploadPage() {
         const filePath = `${user.id}/${Date.now()}_${gameFile.name}`
         const { error: uploadError, data } = await supabase.storage
           .from('games')
-          .upload(filePath, gameFile, { contentType: 'text/html' })
+          .upload(filePath, gameFile, { contentType: 'text/html; charset=utf-8' })
         if (uploadError) throw uploadError
         const { data: urlData } = supabase.storage.from('games').getPublicUrl(data.path)
         finalGameUrl = urlData.publicUrl
