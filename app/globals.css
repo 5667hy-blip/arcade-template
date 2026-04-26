@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-arcade-bg text-white;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .neon-text {
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+
+  .card-hover:hover {
+    @apply -translate-y-1;
+    box-shadow: 0 0 20px #00f5ff40, 0 8px 24px rgba(0,0,0,0.5);
+  }
+
+  .btn-primary {
+    @apply bg-arcade-cyan text-black font-bold py-2 px-6 rounded
+           hover:shadow-neon transition-all duration-200 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply border border-arcade-border text-white font-medium py-2 px-6 rounded
+           hover:border-arcade-cyan hover:text-arcade-cyan transition-all duration-200 active:scale-95;
+  }
+
+  .input-field {
+    @apply w-full bg-arcade-card border border-arcade-border rounded px-4 py-3
+           text-white placeholder-gray-500 focus:outline-none focus:border-arcade-cyan
+           transition-colors duration-200;
+  }
+}
+
+/* スキャンライン演出（オプション） */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
