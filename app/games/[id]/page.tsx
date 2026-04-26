@@ -32,7 +32,7 @@ export default async function GamePage({ params }: { params: { id: string } }) {
   }
 
   // プレイ数インクリメント（失敗しても続行）
-  await supabase.rpc('increment_play_count', { game_id: params.id }).catch(() => {})
+  try { await supabase.rpc('increment_play_count', { game_id: params.id }) } catch {}
 
   return <GamePlayer game={gameWithProfile} />
 }
