@@ -46,18 +46,14 @@ export default function UploadPage() {
 
     try {
       let finalGameUrl = gameUrl
+      let htmlContent: string | null = null
 
-      // HTMLファイルアップロードの場合
+      // HTMLファイルの場合：テキストとしてDBに保存（Storageは使わない）
       if (mode === 'file') {
         if (!gameFile) throw new Error('HTMLファイルを選択してください')
-        setProgress('ゲームファイルをアップロード中...')
-        const filePath = `${user.id}/${Date.now()}_${gameFile.name}`
-        const { error: uploadError, data } = await supabase.storage
-          .from('games')
-          .upload(filePath, gameFile, { contentType: 'text/html; charset=utf-8' })
-        if (uploadError) throw uploadError
-        const { data: urlData } = supabase.storage.from('games').getPublicUrl(data.path)
-        finalGameUrl = urlData.publicUrl
+        setProgress('ゲームファイルを読み込み中...')
+        htmlContent = await gameFile.text()
+        finalGameUrl = `file:${gameFile.name}` // URLは使わないがNOT NULL制約のためダミー
       }
 
       // サムネイルアップロード
@@ -83,6 +79,7 @@ export default function UploadPage() {
           title,
           description: description || null,
           game_url: finalGameUrl,
+          html_content: htmlContent,
           thumbnail_url: thumbnailUrl,
           user_id: user.id,
           tags: tagArray.length > 0 ? tagArray : null,
