@@ -10,17 +10,31 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     .eq('id', params.id)
     .single()
 
-  if (!game) {
-    return new NextResponse('Game not found', { status: 404 })
-  }
+  if (!game) return new NextResponse('Not found', { status: 404 })
 
-  // game_urlがHTMLコンテンツ（<で始まる）ならそのまま返す
-  if (game.game_url.trimStart().startsWith('<')) {
-    return new NextResponse(game.game_url, {
+  const url = game.game_url
+
+  // HTMLが直接入っている場合
+  if (url.trimStart().startsWith('<')) {
+    return new NextResponse(url, {
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     })
   }
 
-  // URLの場合はリダイレクト
-  return NextResponse.redirect(game.game_url)
+  // Supabase StorageのURLの場合：パスを取り出してSDK経由でダウンロード
+  if (url.includes('/storage/v1/object/public/games/')) {
+    const storagePath = url.split('/storage/v1/object/public/games/')[1]
+    const { data, error } = await supabase.storage.from('games').download(storagePath)
+    if (error || !data) {
+      return new NextResponse('Failed to load game: ' + error?.message, { status: 502 })
+    }
+    const buffer = await data.arrayBuffer()
+    const html = new TextDecoder('utf-8').decode(buffer)
+    return new NextResponse(html, {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    })
+  }
+
+  // 外部URLの場合はリダイレクト
+  return NextResponse.redirect(url)
 }
