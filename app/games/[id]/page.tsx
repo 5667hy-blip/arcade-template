@@ -6,7 +6,6 @@ import GamePlayer from './GamePlayer'
 export default async function GamePage({ params }: { params: { id: string } }) {
   const supabase = createClient()
 
-  // まずgamesだけ取得（profilesジョインを別にすることで片方が欠けても動く）
   const { data: game, error } = await supabase
     .from('games')
     .select('*')
@@ -19,20 +18,28 @@ export default async function GamePage({ params }: { params: { id: string } }) {
   }
   if (!game) notFound()
 
-  // profilesは別クエリで取得（テーブルがなくても落ちない）
   const { data: profile } = await supabase
     .from('profiles')
     .select('username')
     .eq('id', game.user_id)
     .single()
 
+  // Supabase StorageのURLならHTMLを直接取得してsrcdocで渡す（文字化け対策）
+  let htmlContent: string | null = null
+  if (game.game_url.includes('supabase.co/storage')) {
+    const res = await fetch(game.game_url)
+    if (res.ok) {
+      const buffer = await res.arrayBuffer()
+      htmlContent = new TextDecoder('utf-8').decode(buffer)
+    }
+  }
+
   const gameWithProfile = {
     ...game,
     profiles: profile ?? undefined,
   }
 
-  // プレイ数インクリメント（失敗しても続行）
   try { await supabase.rpc('increment_play_count', { game_id: params.id }) } catch {}
 
-  return <GamePlayer game={gameWithProfile} />
+  return <GamePlayer game={gameWithProfile} htmlContent={htmlContent} />
 }

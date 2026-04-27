@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { Game } from '@/lib/supabase/types'
 
-export default function GamePlayer({ game }: { game: Game }) {
+export default function GamePlayer({ game, htmlContent }: { game: Game; htmlContent: string | null }) {
   const [fullscreen, setFullscreen] = useState(false)
 
   return (
@@ -39,7 +39,7 @@ export default function GamePlayer({ game }: { game: Game }) {
         `}
       >
         <iframe
-          src={`/api/play/${game.id}`}
+          {...(htmlContent ? { srcDoc: htmlContent } : { src: game.game_url })}
           className="absolute inset-0 w-full h-full"
           allow="fullscreen; autoplay; gamepad"
           sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups"
