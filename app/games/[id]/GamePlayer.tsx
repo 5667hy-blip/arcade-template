@@ -1,33 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import type { Game } from '@/lib/supabase/types'
 
-export default function GamePlayer({ game, htmlContent }: { game: Game; htmlContent: string | null }) {
+export default function GamePlayer({ game }: { game: Game & { profiles?: { username: string | null } | undefined } }) {
   const [fullscreen, setFullscreen] = useState(false)
-  const [iframeSrc, setIframeSrc] = useState<string | null>(null)
-  const blobUrlRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (htmlContent) {
-      // HTMLをBlobとして扱いURLを生成 → ブラウザが確実にHTMLとして実行する
-      const blob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      blobUrlRef.current = url
-      setIframeSrc(url)
-    } else {
-      setIframeSrc(game.game_url)
-    }
-
-    return () => {
-      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
-    }
-  }, [htmlContent, game.game_url])
 
   return (
     <div className={fullscreen ? 'fixed inset-0 z-50 bg-black flex flex-col' : 'max-w-4xl mx-auto px-4 py-6'}>
-      {/* タイトルバー */}
       <div className={`flex items-center justify-between mb-3 ${fullscreen ? 'px-3 pt-3' : ''}`}>
         <div>
           {!fullscreen && (
@@ -48,29 +29,19 @@ export default function GamePlayer({ game, htmlContent }: { game: Game; htmlCont
         </button>
       </div>
 
-      {/* ゲームフレーム */}
-      <div
-        className={`
-          relative bg-black border border-arcade-border rounded-lg overflow-hidden
-          ${fullscreen ? 'flex-1' : 'w-full aspect-[4/3] md:aspect-video'}
-        `}
-      >
-        {iframeSrc ? (
-          <iframe
-            src={iframeSrc}
-            className="absolute inset-0 w-full h-full"
-            allow="fullscreen; autoplay; gamepad"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups"
-            title={game.title}
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
-            読み込み中...
-          </div>
-        )}
+      <div className={`
+        relative bg-black border border-arcade-border rounded-lg overflow-hidden
+        ${fullscreen ? 'flex-1' : 'w-full aspect-[4/3] md:aspect-video'}
+      `}>
+        <iframe
+          src={`/api/play/${game.id}`}
+          className="absolute inset-0 w-full h-full"
+          allow="fullscreen; autoplay; gamepad"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups"
+          title={game.title}
+        />
       </div>
 
-      {/* ゲーム情報 */}
       {!fullscreen && (
         <div className="mt-4 bg-arcade-card border border-arcade-border rounded-lg p-4">
           <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
