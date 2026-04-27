@@ -46,14 +46,13 @@ export default function UploadPage() {
 
     try {
       let finalGameUrl = gameUrl
-      let htmlContent: string | null = null
 
-      // HTMLファイルの場合：テキストとしてDBに保存（Storageは使わない）
+      // HTMLファイルの場合：HTMLテキストをそのままgame_urlに格納する
+      // （先頭が"<"であることでURL登録と区別する）
       if (mode === 'file') {
         if (!gameFile) throw new Error('HTMLファイルを選択してください')
         setProgress('ゲームファイルを読み込み中...')
-        htmlContent = await gameFile.text()
-        finalGameUrl = `file:${gameFile.name}` // URLは使わないがNOT NULL制約のためダミー
+        finalGameUrl = await gameFile.text()
       }
 
       // サムネイルアップロード
@@ -79,7 +78,6 @@ export default function UploadPage() {
           title,
           description: description || null,
           game_url: finalGameUrl,
-          html_content: htmlContent,
           thumbnail_url: thumbnailUrl,
           user_id: user.id,
           tags: tagArray.length > 0 ? tagArray : null,
