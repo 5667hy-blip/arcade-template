@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { Game } from '@/lib/supabase/types'
 
-type NippleCollection = { on(evt: string, cb: (e: { data?: { direction?: { x?: string; y?: string } } }) => void): void; destroy(): void }
+type NippleCollection = { on(evt: string, cb: (e: { data?: { angle?: { degree: number } } }) => void): void; destroy(): void }
 
 function dispatchKey(iframeEl: HTMLIFrameElement, key: string, type: 'keydown' | 'keyup') {
   const doc = iframeEl.contentDocument
@@ -14,10 +14,6 @@ function dispatchKey(iframeEl: HTMLIFrameElement, key: string, type: 'keydown' |
 }
 
 const ALL_WASD = ['w', 'a', 's', 'd']
-
-function releaseAll(iframe: HTMLIFrameElement) {
-  ALL_WASD.forEach((k) => dispatchKey(iframe, k, 'keyup'))
-}
 
 export default function GamePlayer({ game }: { game: Game & { profiles?: { username: string | null } | undefined } }) {
   const [fullscreen, setFullscreen] = useState(false)
@@ -30,6 +26,21 @@ export default function GamePlayer({ game }: { game: Game & { profiles?: { usern
     if (!joystickEnabled) return
 
     let manager: NippleCollection | null = null
+    const pressed = new Set<string>()
+
+    const press = (iframe: HTMLIFrameElement, key: string) => {
+      if (pressed.has(key)) return
+      pressed.add(key)
+      dispatchKey(iframe, key, 'keydown')
+    }
+    const release = (iframe: HTMLIFrameElement, key: string) => {
+      if (!pressed.has(key)) return
+      pressed.delete(key)
+      dispatchKey(iframe, key, 'keyup')
+    }
+    const releaseAll = (iframe: HTMLIFrameElement) => {
+      ALL_WASD.forEach((k) => release(iframe, k))
+    }
 
     const init = async () => {
       const { create } = await import('nipplejs')
@@ -49,15 +60,18 @@ export default function GamePlayer({ game }: { game: Game & { profiles?: { usern
       manager.on('move', (evt) => {
         const iframe = iframeRef.current
         if (!iframe) return
-        const dir = evt.data?.direction
 
-        releaseAll(iframe)
-        if (!dir) return
+        const deg = evt.data?.angle?.degree
+        if (deg == null) { releaseAll(iframe); return }
 
-        if (dir.y === 'up')    dispatchKey(iframe, 'w', 'keydown')
-        if (dir.y === 'down')  dispatchKey(iframe, 's', 'keydown')
-        if (dir.x === 'left')  dispatchKey(iframe, 'a', 'keydown')
-        if (dir.x === 'right') dispatchKey(iframe, 'd', 'keydown')
+        // nipplejs: 0°=右, 90°=上, 180°=左, 270°=下 (反時計回り)
+        const d = ((deg % 360) + 360) % 360
+
+        // 各方向を90°幅で検出、隣り合う方向と45°重複 → 8方向対応
+        if (d > 22.5 && d < 157.5)  press(iframe, 'w'); else release(iframe, 'w')
+        if (d > 202.5 && d < 337.5) press(iframe, 's'); else release(iframe, 's')
+        if (d > 112.5 && d < 247.5) press(iframe, 'a'); else release(iframe, 'a')
+        if (d > 292.5 || d < 67.5)  press(iframe, 'd'); else release(iframe, 'd')
       })
 
       manager.on('end', () => {
@@ -71,6 +85,7 @@ export default function GamePlayer({ game }: { game: Game & { profiles?: { usern
     return () => {
       manager?.destroy()
       managerRef.current = null
+      pressed.clear()
     }
   }, [joystickEnabled])
 
